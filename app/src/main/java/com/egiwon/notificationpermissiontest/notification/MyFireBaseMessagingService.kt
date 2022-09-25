@@ -1,12 +1,8 @@
 package com.egiwon.notificationpermissiontest.notification
 
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import androidx.core.app.NotificationCompat
-import com.egiwon.notificationpermissiontest.MainActivity
-import com.egiwon.notificationpermissiontest.R
+import androidx.core.content.ContextCompat
+import com.egiwon.notificationpermissiontest.util.sendNotification
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -17,38 +13,18 @@ class MyFireBaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
 
-        if (message.notification != null) {
-            sendNotification(message.notification ?: return)
+        message.notification?.let {
+            sendNotification(it.body ?: return@let)
         }
     }
 
-    private fun sendNotification(notification: RemoteMessage.Notification) {
-        val messageBody: String? = notification.body
-        val messageTitle: String? = notification.title
+    private fun sendNotification(messageBody: String) {
 
-        val intent = Intent(this, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(messageTitle)
-            .setContentText(messageBody)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-
-        val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(0, builder.build())
+        val notificationManager = ContextCompat.getSystemService(
+            applicationContext,
+            NotificationManager::class.java
+        ) as NotificationManager
+        notificationManager.sendNotification(messageBody, applicationContext)
     }
 
-
-    companion object {
-        const val CHANNEL_ID = "fcm"
-    }
 }
